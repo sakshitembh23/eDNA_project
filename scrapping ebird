@@ -1,0 +1,46 @@
+## new data scrapping code
+## scrapping ebird data 
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+def fetch_ebird_data(location_url):
+    response = requests.get(location_url)
+    if response.status_code != 200:
+        print(f"Failed to fetch data from eBird: {response.status_code}")
+        return []
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Extract bird observation data from the HTML
+    observations = []
+    for row in soup.find_all('tr', class_='Observation-row'):
+        species_name = row.find('div', class_='Observation-species').text.strip()
+        date = row.find('div', class_='Observation-date').text.strip()
+        location = row.find('div', class_='Observation-location').text.strip()
+        count = row.find('div', class_='Observation-count').text.strip()
+        observations.append({
+            'species_name': species_name,
+            'date': date,
+            'location': location,
+            'count': count
+        })
+    
+    return observations
+
+# Replace with the actual URL of the eBird Jakkur Lake location page
+location_url = 'https://ebird.org/hotspot/L29306451'  # Example URL for Jakkur Lake
+
+# Fetch data from eBird
+ebird_data = fetch_ebird_data(location_url)
+
+# Check if data was fetched successfully
+if ebird_data:
+    # Convert eBird data to DataFrame
+    ebird_df = pd.DataFrame(ebird_data)
+
+    # Save DataFrame to CSV
+    ebird_df.to_csv('ebird_observations_jakkur_lake.csv', index=False)
+    print("Data has been successfully saved to 'ebird_observations_jakkur_lake.csv'")
+else:
+    print("No data fetched from eBird.")
